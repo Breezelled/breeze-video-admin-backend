@@ -1,5 +1,4 @@
 import re
-
 import requests
 from bs4 import BeautifulSoup
 import unicodedata
@@ -32,12 +31,15 @@ class Model():
         self.trailer_save_path = './trailer'
         # 电影信息的保存文件
         self.info_save_path = './info/info.csv'
+        # 评论的保存文件
+        self.reviews_save_path = './info/reviews.csv'
         # logging的配置，记录运行日志
         logging.basicConfig(filename="run.log", filemode="a+", format="%(asctime)s %(name)s:%(levelname)s:%(message)s",
                             datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO)
         # 表示当前处理的电影
         self.cur_movie_id = None
         self.cur_imdb_id = None
+        self.get_reviews_num = 5
 
     def get_white_lst(self):
         """获取处理完的白名单"""
@@ -64,7 +66,7 @@ class Model():
     def update_black_lst(self, movie_id, msg=''):
         with open(r'black_list', 'a+') as f:
             # 写入movie id 和imdb id，并且加上错误原因
-            # msg=1是URL失效，msg=2是电影没有海报，msg=3是电影没有预告片
+            # msg=1是URL失效，msg=2是电影没有海报，msg=3是电影没有预告片，msg=4是电影没有评论
             f.write(movie_id + ' ' + self.movie_dct[movie_id] + ' ' + msg + '\n')
 
     def get_url_response(self, url):
@@ -99,51 +101,51 @@ class Model():
         name = unicodedata.normalize('NFKC', name)
         print(name)
         poster_url = ''
-        # try:
-        #     # 海报的高清大图URL
-        #     poster_website_url = "https://www.imdb.com" + str(soup.find(
-        #         class_='ipc-poster ipc-poster--baseAlt ipc-poster--dynamic-width sc-d383958-0 gvOdLN celwidget'
-        #                ' ipc-sub-grid-item ipc-sub-grid-item--span-2').a['href'])
-        #     # 访问
-        #     response = self.get_url_response(poster_website_url)
-        #     poster_soup = BeautifulSoup(response.content)
-        #
-        #     # print(poster_soup.find(class_="sc-7c0a9e7c-2 bkptFa").img['src'])
-        #     for i in poster_soup.find_all(class_="sc-7c0a9e7c-2 bkptFa"):
-        #         # 找到当前图片
-        #         if "curr" in i.img["data-image-id"]:
-        #             poster_url = i.img["src"]
-        #     poster_re = self.get_url_response(poster_url)
-        #     # 保存图片
-        #     self.save_poster(self.cur_imdb_id, poster_re.content)
-        # except AttributeError as e:
-        #     # 如果没有海报链接，那么在黑名单中更新它
-        #     # msg=3表示没有海报链接
-        #     self.update_black_lst(self.cur_movie_id, '2')
+        try:
+            # 海报的高清大图URL
+            poster_website_url = "https://www.imdb.com" + str(soup.find(
+                class_='ipc-poster ipc-poster--baseAlt ipc-poster--dynamic-width sc-d383958-0 gvOdLN celwidget'
+                       ' ipc-sub-grid-item ipc-sub-grid-item--span-2').a['href'])
+            # 访问
+            response = self.get_url_response(poster_website_url)
+            poster_soup = BeautifulSoup(response.content, "lxml")
+
+            # print(poster_soup.find(class_="sc-7c0a9e7c-2 bkptFa").img['src'])
+            for i in poster_soup.find_all(class_="sc-7c0a9e7c-2 bkptFa"):
+                # 找到当前图片
+                if "curr" in i.img["data-image-id"]:
+                    poster_url = i.img["src"]
+            poster_re = self.get_url_response(poster_url)
+            # 保存图片
+            self.save_poster(self.cur_imdb_id, poster_re.content)
+        except AttributeError as e:
+            # 如果没有海报链接，那么在黑名单中更新它
+            # msg=3表示没有海报链接
+            self.update_black_lst(self.cur_movie_id, '2')
 
         trailer_url = ''
-        # try:
-        #     # selenium打开网页
-        #     driver.get(str(cur_url))
-        #     driver.find_element(By.XPATH,
-        #                         "/html/body/div[2]/main/div/section[1]/section/div[3]/section/section/div[3]/div[1]"
-        #                         "/div/div[2]/div[2]").click()
-        #     trailer_website_url = driver.current_url
-        #     # 访问
-        #     response = self.get_url_response(trailer_website_url)
-        #     trailer_soup = BeautifulSoup(response.content)
-        #     # json解析
-        #     trailer_url = json.loads(trailer_soup.find("script", {'id': '__NEXT_DATA__'}).get_text()).get("props")\
-        #         .get("pageProps").get("videoPlaybackData").get("video").get("playbackURLs")[0].get("url")
-        #
-        #     print(trailer_url)
-        #     trailer_re = self.get_url_response(trailer_url)
-        #     # 保存预告片
-        #     self.save_trailer(self.cur_imdb_id, trailer_re.content)
-        # except AttributeError as e:
-        #     # 如果没有预告片链接，那么在黑名单中更新它
-        #     # msg=3表示没有预告片链接
-        #     self.update_black_lst(self.cur_movie_id, '3')
+        try:
+            # selenium打开网页
+            driver.get(str(cur_url))
+            driver.find_element(By.XPATH,
+                                "/html/body/div[2]/main/div/section[1]/section/div[3]/section/section/div[3]/div[1]"
+                                "/div/div[2]/div[2]").click()
+            trailer_website_url = driver.current_url
+            # 访问
+            response = self.get_url_response(trailer_website_url)
+            trailer_soup = BeautifulSoup(response.content, "lxml")
+            # json解析
+            trailer_url = json.loads(trailer_soup.find("script", {'id': '__NEXT_DATA__'}).get_text()).get("props")\
+                .get("pageProps").get("videoPlaybackData").get("video").get("playbackURLs")[0].get("url")
+
+            print(trailer_url)
+            trailer_re = self.get_url_response(trailer_url)
+            # 保存预告片
+            self.save_trailer(self.cur_imdb_id, trailer_re.content)
+        except AttributeError as e:
+            # 如果没有预告片链接，那么在黑名单中更新它
+            # msg=3表示没有预告片链接
+            self.update_black_lst(self.cur_movie_id, '3')
 
         # 电影的基本信息   1h 21min | Animation, Adventure, Comedy | 21 March 1996 (Germany)
         info = []
@@ -163,25 +165,121 @@ class Model():
         info.append(release_date_li.div.get_text())
         print(info)
         # 简介
-        intro = soup.find(class_='sc-16ede01-6 cXGXRR').span.get_text().strip()
+        intro = soup.find(attrs={'class': re.compile('^sc-16ede01-0')}).get_text().strip()
         intro = unicodedata.normalize('NFKC', intro)
         # 演员阵容 D W S，分别表示 导演，编剧，明星
         case_dict = {'D': [], 'W': [], 'S': []}
         for i in soup.find_all(class_='sc-bfec09a1-1 gfeYgX'):
             case_dict['S'].append(i.get_text())
         ul = soup.find(class_='ipc-metadata-list ipc-metadata-list--dividers-all sc-bfec09a1-8 jvByYy '
-                                        'ipc-metadata-list--base')
+                              'ipc-metadata-list--base')
         case_dict['D'].append(ul.li.div.ul.li.a.get_text())
         w_lis = ul.li.next_sibling.div.ul.children
         for i in w_lis:
             case_dict['W'].append(i.a.get_text())
 
-        # id，电影名称，海报链接，时长，类型，发行时间，简介，导演，编剧，演员
+        budget_gross = []
+
+        # 预算和票房
+        try:
+            budget_gross.append(soup.find(attrs={"class": "ipc-metadata-list__item sc-6d4f3f8c-2 fJEELB",
+                                                 "data-testid": "title-boxoffice-budget"}).div.get_text())
+        except AttributeError as e:
+            budget_gross.append('')
+
+        try:
+            budget_gross.append(soup.find(attrs={"class": "ipc-metadata-list__item sc-6d4f3f8c-2 fJEELB",
+                                                 "data-testid": "title-boxoffice-cumulativeworldwidegross"})
+                                .div.get_text())
+        except AttributeError as e:
+            budget_gross.append('')
+
+        print(budget_gross)
+
+        lang, comp, country = [], [], []
+        # 影片语言
+        try:
+            lang_ul = soup.find(attrs={"class": "ipc-metadata-list__item", "data-testid": "title-details-languages"}) \
+                .div.ul
+            for i in lang_ul.children:
+                lang.append(i.get_text())
+        except AttributeError as e:
+            pass
+        # 制作公司
+        try:
+            comp_ul = soup.find(attrs={"class": "ipc-metadata-list__item ipc-metadata-list-item--link",
+                                       "data-testid": "title-details-companies"}).div.ul
+            for i in comp_ul.children:
+                comp.append(i.get_text())
+        except AttributeError as e:
+            pass
+        # 制作国家
+        try:
+            country_ul = soup.find(attrs={"class": "ipc-metadata-list__item",
+                                          "data-testid": "title-details-origin"}).div.ul
+            for i in country_ul.children:
+                country.append(i.get_text())
+        except AttributeError as e:
+            pass
+
+        rating, review_num, tagline = '', '', ''
+        # 评分，评分数，标语
+        try:
+            rating = soup.find(attrs={"class": re.compile('^sc-7ab21ed2-2')}).get_text()
+        except AttributeError as e:
+            pass
+
+        try:
+            review_num = soup.find(attrs={"class": re.compile('^sc-7ab21ed2-3')}).get_text()
+        except AttributeError as e:
+            pass
+
+        try:
+            response = self.get_url_response(cur_url + '/taglines')
+            tagline_soup = BeautifulSoup(response.content, "lxml")
+            tagline = tagline_soup.find("div", class_="soda odd").get_text().strip()
+        except AttributeError as e:
+            pass
+        print(tagline)
+        # id，电影名称，海报链接，时长，类型，发行时间，简介，导演，编剧，演员，预算，票房，语言，制作公司，制作国家，评分，评分数，标语
         print(case_dict)
         detail = [self.cur_movie_id, name, poster_url, info[0], '|'.join(info[1:-1]),
-                  info[-1], intro,
-                  '|'.join(case_dict['D']), '|'.join(case_dict['W']), '|'.join(case_dict['S'])]
+                  info[-1], intro, '|'.join(case_dict['D']), '|'.join(case_dict['W']), '|'.join(case_dict['S']),
+                  budget_gross[0], budget_gross[1], '|'.join(lang), '|'.join(comp), '|'.join(country), rating,
+                  review_num, tagline]
+        print(detail)
         self.save_info(detail)
+
+        # 评论
+        # T是标题 C是内容 A是作者 D是时间
+        reviews_dict = {'T': [], 'C': [], 'A': [], 'D': []}
+        try:
+            response = self.get_url_response(cur_url + '/reviews')
+            review_soup = BeautifulSoup(response.content, "lxml")
+            title = review_soup.findAll("a", class_="title")
+            content = review_soup.findAll("div", class_="text show-more__control")
+            author = review_soup.findAll("span", class_="display-name-link")
+            date = review_soup.findAll("span", class_="review-date")
+            i = 0
+            while i != self.get_reviews_num:
+                reviews_dict['T'].append(title[i].get_text().strip())
+                reviews_dict['C'].append(unicodedata.normalize('NFKC', content[i].get_text()))
+                reviews_dict['A'].append(author[i].a.get_text())
+                reviews_dict['D'].append(date[i].get_text())
+                i += 1
+
+        except AttributeError as e:
+            # 如果没有评论链接，那么在黑名单中更新它
+            # msg=4表示没有评论链接
+            self.update_black_lst(self.cur_movie_id, '4')
+        print(reviews_dict)
+        # id，作者，时间，标题，内容
+        with open(f'{self.reviews_save_path}', 'a+', encoding='utf-8', newline='') as f:
+            for i in range(len(reviews_dict['T'])):
+                review = [self.cur_movie_id, reviews_dict['A'][i], reviews_dict['D'][i],
+                          reviews_dict['T'][i], reviews_dict['C'][i]]
+                writer = csv.writer(f)
+                writer.writerow(review)
 
     def save_poster(self, imdb_id, content):
         with open(f'{self.poster_save_path}/{imdb_id}.jpg', 'wb') as f:
@@ -192,7 +290,6 @@ class Model():
             f.write(content)
 
     def save_info(self, detail):
-        # 存储到CSV文件中
         with open(f'{self.info_save_path}', 'a+', encoding='utf-8', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(detail)
@@ -227,6 +324,6 @@ class Model():
 
 if __name__ == '__main__':
     # selenium
-    # driver = webdriver.Chrome()
+    driver = webdriver.Chrome()
     s = Model()
     s.run()
