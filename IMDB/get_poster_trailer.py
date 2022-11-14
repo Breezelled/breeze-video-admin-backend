@@ -42,7 +42,7 @@ class Model():
 
     def get_white_lst(self):
         """获取处理完的白名单"""
-        with open(r'white_list') as f:
+        with open(r'trailer_white_list') as f:
             for line in f:
                 line = line.strip()
                 self.white_lst.append(line)
@@ -59,7 +59,7 @@ class Model():
 
     def update_white_lst(self, movie_id):
         """更新白名单"""
-        with open(r'white_list', 'a+') as f:
+        with open(r'trailer_white_list', 'a+') as f:
             f.write(movie_id + '\n')
 
     def update_black_lst(self, movie_id, msg=''):
@@ -152,21 +152,26 @@ class Model():
     def run(self):
         # 开始爬取信息
         # 先读入文件
+        self.get_white_lst()
         self.get_movie_id()
         for movie_id, imdb_id in self.movie_dct.items():
+            if movie_id in self.white_lst:
+                continue
             self.cur_movie_id = movie_id
             self.cur_imdb_id = imdb_id
-            time.sleep(1)
             cur_url = self.url + 'tt' + self.cur_imdb_id
             response = self.get_url_response(cur_url)
             # 找不到电影详情页的url，或者超时，则仅仅保留id，之后再用另一个脚本处理
             if response is None:
+                # 仍然更新白名单，避免重复爬取这些失败的电影
+                self.update_white_lst(self.cur_movie_id)
                 # 更新黑名单，爬完之后用另一个脚本再处理
                 self.update_black_lst(self.cur_movie_id, '1')
                 continue
             # 处理电影详情信息
             self.process_html(response.content, cur_url)
             # 处理完成，增加movie id到白名单中
+            self.update_white_lst(self.cur_movie_id)
             logging.info(f'process movie {self.cur_movie_id} success')
 
 

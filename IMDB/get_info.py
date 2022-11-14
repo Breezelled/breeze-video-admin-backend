@@ -193,9 +193,9 @@ class Model():
         except AttributeError as e:
             pass
         print(tagline)
-        # id，电影名称，海报链接，时长，类型，发行时间，简介，导演，编剧，演员，预算，票房，语言，制作公司，制作国家，评分，评分数，标语
+        # id，电影名称，时长，类型，发行时间，简介，导演，编剧，演员，预算，票房，语言，制作公司，制作国家，评分，评分数，标语
         print(case_dict)
-        detail = [self.cur_movie_id, name, poster_url, info[0], '|'.join(info[1:-1]),
+        detail = [self.cur_movie_id, name, info[0], '|'.join(info[1:-1]),
                   info[-1], intro, '|'.join(case_dict['D']), '|'.join(case_dict['W']), '|'.join(case_dict['S']),
                   budget_gross[0], budget_gross[1], '|'.join(lang), '|'.join(comp), '|'.join(country), rating,
                   review_num, tagline]
