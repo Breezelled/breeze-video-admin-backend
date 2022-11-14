@@ -5,8 +5,6 @@ import unicodedata
 import logging
 import csv
 import time
-from lxml import etree
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 import json
 
@@ -100,52 +98,6 @@ class Model():
         # 去掉html的一些/x20等空白符
         name = unicodedata.normalize('NFKC', name)
         print(name)
-        poster_url = ''
-        try:
-            # 海报的高清大图URL
-            poster_website_url = "https://www.imdb.com" + str(soup.find(
-                class_='ipc-poster ipc-poster--baseAlt ipc-poster--dynamic-width sc-d383958-0 gvOdLN celwidget'
-                       ' ipc-sub-grid-item ipc-sub-grid-item--span-2').a['href'])
-            # 访问
-            response = self.get_url_response(poster_website_url)
-            poster_soup = BeautifulSoup(response.content, "lxml")
-
-            # print(poster_soup.find(class_="sc-7c0a9e7c-2 bkptFa").img['src'])
-            for i in poster_soup.find_all(class_="sc-7c0a9e7c-2 bkptFa"):
-                # 找到当前图片
-                if "curr" in i.img["data-image-id"]:
-                    poster_url = i.img["src"]
-            poster_re = self.get_url_response(poster_url)
-            # 保存图片
-            self.save_poster(self.cur_imdb_id, poster_re.content)
-        except AttributeError as e:
-            # 如果没有海报链接，那么在黑名单中更新它
-            # msg=3表示没有海报链接
-            self.update_black_lst(self.cur_movie_id, '2')
-
-        trailer_url = ''
-        try:
-            # selenium打开网页
-            driver.get(str(cur_url))
-            driver.find_element(By.XPATH,
-                                "/html/body/div[2]/main/div/section[1]/section/div[3]/section/section/div[3]/div[1]"
-                                "/div/div[2]/div[2]").click()
-            trailer_website_url = driver.current_url
-            # 访问
-            response = self.get_url_response(trailer_website_url)
-            trailer_soup = BeautifulSoup(response.content, "lxml")
-            # json解析
-            trailer_url = json.loads(trailer_soup.find("script", {'id': '__NEXT_DATA__'}).get_text()).get("props")\
-                .get("pageProps").get("videoPlaybackData").get("video").get("playbackURLs")[0].get("url")
-
-            print(trailer_url)
-            trailer_re = self.get_url_response(trailer_url)
-            # 保存预告片
-            self.save_trailer(self.cur_imdb_id, trailer_re.content)
-        except AttributeError as e:
-            # 如果没有预告片链接，那么在黑名单中更新它
-            # msg=3表示没有预告片链接
-            self.update_black_lst(self.cur_movie_id, '3')
 
         # 电影的基本信息   1h 21min | Animation, Adventure, Comedy | 21 March 1996 (Germany)
         info = []
@@ -324,6 +276,5 @@ class Model():
 
 if __name__ == '__main__':
     # selenium
-    driver = webdriver.Chrome()
     s = Model()
     s.run()
