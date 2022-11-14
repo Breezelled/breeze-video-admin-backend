@@ -120,15 +120,18 @@ class Model():
         intro = soup.find(attrs={'class': re.compile('^sc-16ede01-0')}).get_text().strip()
         intro = unicodedata.normalize('NFKC', intro)
         # 演员阵容 D W S，分别表示 导演，编剧，明星
-        case_dict = {'D': [], 'W': [], 'S': []}
-        for i in soup.find_all(class_='sc-bfec09a1-1 gfeYgX'):
-            case_dict['S'].append(i.get_text())
-        ul = soup.find(class_='ipc-metadata-list ipc-metadata-list--dividers-all sc-bfec09a1-8 jvByYy '
-                              'ipc-metadata-list--base')
-        case_dict['D'].append(ul.li.div.ul.li.a.get_text())
-        w_lis = ul.li.next_sibling.div.ul.children
-        for i in w_lis:
-            case_dict['W'].append(i.a.get_text())
+        try:
+            case_dict = {'D': [], 'W': [], 'S': []}
+            for i in soup.find_all(attrs={"class": re.compile('^sc-bfec09a1-1')}):
+                case_dict['S'].append(i.get_text())
+            ul = soup.find(attrs={"class": re.compile('^ipc-metadata-list ipc-metadata-list--dividers-all sc-bfec09a1-8')})
+            case_dict['D'].append(ul.li.div.ul.li.a.get_text())
+            w_lis = ul.li.next_sibling.div.ul.children
+            for i in w_lis:
+                case_dict['W'].append(i.a.get_text())
+        except AttributeError as e:
+            pass
+
 
         budget_gross = []
 
@@ -213,6 +216,8 @@ class Model():
             author = review_soup.findAll("span", class_="display-name-link")
             date = review_soup.findAll("span", class_="review-date")
             i = 0
+            if self.get_reviews_num > len(title):
+                self.get_reviews_num = len(title)
             while i != self.get_reviews_num:
                 reviews_dict['T'].append(title[i].get_text().strip())
                 reviews_dict['C'].append(unicodedata.normalize('NFKC', content[i].get_text()))

@@ -8,6 +8,8 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import json
+import os
+from you_get import common
 
 
 class Model():
@@ -120,6 +122,7 @@ class Model():
         try:
             # selenium打开网页
             driver.get(str(cur_url))
+            t1 = time.time()
             driver.find_element(By.XPATH,
                                 "/html/body/div[2]/main/div/section[1]/section/div[3]/section/section/div[3]/div[1]"
                                 "/div/div[2]/div[2]").click()
@@ -128,14 +131,20 @@ class Model():
             response = self.get_url_response(trailer_website_url)
             trailer_soup = BeautifulSoup(response.content, "lxml")
             # json解析
-            trailer_url = json.loads(trailer_soup.find("script", {'id': '__NEXT_DATA__'}).get_text()).get("props")\
-                .get("pageProps").get("videoPlaybackData").get("video").get("playbackURLs")[0].get("url")
+            trailer_url = ''
+            trailer_url_list = json.loads(trailer_soup.find("script", {'id': '__NEXT_DATA__'}).get_text()).get("props") \
+                .get("pageProps").get("videoPlaybackData").get("video").get("playbackURLs")
+            for i in trailer_url_list:
+                if i.get("mimeType") == "video/mp4":
+                    trailer_url = i.get("url")
 
             print(trailer_url)
-            trailer_re = self.get_url_response(trailer_url)
+            # trailer_re = self.get_url_response(trailer_url)
             # 保存预告片
-            self.save_trailer(self.cur_imdb_id, trailer_re.content)
-        except AttributeError as e:
+            self.save_trailer(self.cur_imdb_id, trailer_url)
+            t5 = time.time()
+            print('程序运行时间:%s毫秒' % ((t5 - t1) * 1000))
+        except:
             # 如果没有预告片链接，那么在黑名单中更新它
             # msg=3表示没有预告片链接
             self.update_black_lst(self.cur_movie_id, '3')
@@ -144,10 +153,10 @@ class Model():
         with open(f'{self.poster_save_path}/{imdb_id}.jpg', 'wb') as f:
             f.write(content)
 
-    def save_trailer(self, imdb_id, content):
-        with open(f'{self.trailer_save_path}/{imdb_id}.mp4', 'wb') as f:
-            f.write(content)
-
+    def save_trailer(self, imdb_id, trailer_url):
+        common.output_filename = imdb_id
+        common.any_download(trailer_url, output_dir=self.trailer_save_path, merge=True)
+        # os.system("ffmpeg -i" + imdb_id + ".mp4 -vcodec h264 -acodec aac convert/"+ imdb_id +".mp4")
 
     def run(self):
         # 开始爬取信息
