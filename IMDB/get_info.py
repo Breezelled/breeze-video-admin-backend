@@ -37,7 +37,7 @@ class Model():
         # 表示当前处理的电影
         self.cur_movie_id = None
         self.cur_imdb_id = None
-        self.get_reviews_num = 5
+        # self.get_reviews_num = 5
 
     def get_white_lst(self):
         """获取处理完的白名单"""
@@ -216,9 +216,10 @@ class Model():
             author = review_soup.findAll("span", class_="display-name-link")
             date = review_soup.findAll("span", class_="review-date")
             i = 0
-            if self.get_reviews_num > len(title):
-                self.get_reviews_num = len(title)
-            while i != self.get_reviews_num:
+            get_reviews_num = 5
+            if get_reviews_num > len(title):
+                get_reviews_num = len(title)
+            while i != get_reviews_num:
                 reviews_dict['T'].append(title[i].get_text().strip())
                 reviews_dict['C'].append(unicodedata.normalize('NFKC', content[i].get_text()))
                 reviews_dict['A'].append(author[i].a.get_text())
