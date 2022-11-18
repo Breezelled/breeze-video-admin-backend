@@ -113,9 +113,11 @@ class Model():
             poster_re = self.get_url_response(poster_url)
             # 保存图片
             self.save_poster(self.cur_imdb_id, poster_re.content)
-        except AttributeError as e:
+        except TypeError as e:
             # 如果没有海报链接，那么在黑名单中更新它
-            # msg=3表示没有海报链接
+            # msg=2表示没有海报链接
+            self.update_black_lst(self.cur_movie_id, '2')
+        except AttributeError as e:
             self.update_black_lst(self.cur_movie_id, '2')
 
         trailer_url = ''

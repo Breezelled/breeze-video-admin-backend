@@ -5,8 +5,6 @@ import unicodedata
 import logging
 import csv
 import time
-from selenium.webdriver.common.by import By
-import json
 
 
 class Model():
@@ -48,13 +46,15 @@ class Model():
 
     def get_movie_id(self):
         """获取电影的id和imdb的id"""
-        with open(self.movie_csv_path) as f:
+        with open(r'black_list') as f:
             f.readline()
             for line in f:
                 line = line.strip()
-                line = line.split(',')
-                # 电影id 对应 imdbid
-                self.movie_dct[line[0]] = line[1]
+                line = line.split(' ')
+                # print(line[2])
+                if line[2] == '1':
+                    # print(line[0])
+                    self.movie_dct[line[0]] = line[1]
 
     def update_white_lst(self, movie_id):
         """更新白名单"""
@@ -245,13 +245,6 @@ class Model():
                 writer = csv.writer(f)
                 writer.writerow(review)
 
-    def save_poster(self, imdb_id, content):
-        with open(f'{self.poster_save_path}/{imdb_id}.jpg', 'wb') as f:
-            f.write(content)
-
-    def save_trailer(self, imdb_id, content):
-        with open(f'{self.trailer_save_path}/{imdb_id}.mp4', 'wb') as f:
-            f.write(content)
 
     def save_info(self, detail):
         with open(f'{self.info_save_path}', 'a+', encoding='utf-8', newline='') as f:
@@ -263,9 +256,10 @@ class Model():
         # 先读入文件
         self.get_white_lst()
         self.get_movie_id()
+        print(self.movie_dct)
         for movie_id, imdb_id in self.movie_dct.items():
-            if movie_id in self.white_lst:
-                continue
+            # if movie_id in self.white_lst:
+            #     continue
             self.cur_movie_id = movie_id
             self.cur_imdb_id = imdb_id
             time.sleep(1)
@@ -274,19 +268,14 @@ class Model():
             # 找不到电影详情页的url，或者超时，则仅仅保留id，之后再用另一个脚本处理
             if response is None:
                 self.save_info([self.cur_movie_id, '' * 9])
-                # 仍然更新白名单，避免重复爬取这些失败的电影
-                self.update_white_lst(self.cur_movie_id)
                 # 更新黑名单，爬完之后用另一个脚本再处理
                 self.update_black_lst(self.cur_movie_id, '1')
                 continue
             # 处理电影详情信息
             self.process_html(response.content, cur_url)
-            # 处理完成，增加movie id到白名单中
-            self.update_white_lst(self.cur_movie_id)
             logging.info(f'process movie {self.cur_movie_id} success')
 
 
 if __name__ == '__main__':
-    # selenium
     s = Model()
     s.run()
