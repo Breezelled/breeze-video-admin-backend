@@ -1,16 +1,27 @@
 from common.api import api
 import pandas as pd
 from flask import Blueprint
-from handler.budget_revenue_handler import clean_budget, clean_revenue, clean_budget_revenue_exception, clean_budget
+from handler.budget_revenue_handler import clean_type, clean_revenue, clean_budget_revenue_exception, \
+    clean_budget
 
 pd.set_option("display.max_rows", None)
+pd.set_option("display.float_format", lambda x: "%.2f" % x)
 
 budget_revenue_bp = Blueprint('budget_revenue', __name__, url_prefix='/api/budget_revenue')
 
 csv_url = "./IMDB/info/info.csv"
 
 
-@budget_revenue_bp.route("/budget_revenue", methods=["GET"])
+@budget_revenue_bp.route("/data", methods=["GET"])
+def api_response():
+    data_dic = {
+        "budgetRevenueData": budget_revenue(),
+        "typeBudgetData": type_budget(),
+        "typeRevenueData": type_revenue(),
+    }
+    return api(data_dic)
+
+
 def budget_revenue():
     df = pd.read_csv(csv_url, usecols=[9, 10])
     # 删除空值
@@ -23,19 +34,34 @@ def budget_revenue():
     print(df)
     print(len(df))
     data = df.to_dict("records")
-    # print(data)
-    return api(data)
+    # print(budget_revenue_data)
+    return data
 
 
-@budget_revenue_bp.route("/type_budget", methods=["GET"])
 def type_budget():
     df = pd.read_csv(csv_url, usecols=[3, 9])
     df.dropna(inplace=True)
     df = clean_budget(df)
 
-    print(df)
+    data = clean_type(df, 'budget').to_dict("records")
 
-    return api([])
+    print(data)
+    # print(df)
+
+    return data
+
+
+def type_revenue():
+    df = pd.read_csv(csv_url, usecols=[3, 10])
+    df.dropna(inplace=True)
+    df = clean_revenue(df)
+
+    data = clean_type(df, 'revenue').to_dict("records")
+
+    print(data)
+    # print(df)
+
+    return data
 
 
 @budget_revenue_bp.route("/vote_revenue", methods=["GET"])

@@ -1,10 +1,11 @@
 from flask import jsonify
 
 
-def api(data):
+def api(data_dic):
+
     api = {
         "success": True,
-        "data": {"budgetRevenueData": data},
+        "data": data_dic,
         "errorMessage": "error message"
     }
     return jsonify(api)
