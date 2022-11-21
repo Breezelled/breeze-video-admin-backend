@@ -17,6 +17,7 @@ def api_response():
         "typeBudgetData": type_budget(),
         "typeRevenueData": type_revenue(),
         "typeDateNumData": type_date_num(),
+        "typeCountData": type_count(),
     }
     return api(data_dic)
 
@@ -53,11 +54,23 @@ def type_date_num():
     df = clean_type(df)
     df['release_date'] = df['release_date'].str.extract(r'(\d\d\d\d)', expand=False)
     df['cnt'] = 1
-    data = df.groupby(['type', 'release_date'])['cnt'].size()\
+    data = df.groupby(['type', 'release_date'])['cnt'].size() \
         .reset_index(name='count')
     data = data.sort_values(by='release_date', ascending=True).to_dict("records")
     # data = data.reset_index()
     print(data)
     # print(df)
+
+    return data
+
+
+def type_count():
+    df = pd.read_csv(csv_url, usecols=[3, 4])
+    df.dropna(inplace=True)
+    df = clean_type(df)
+    data = df.groupby(df['type']).count().reset_index()
+    data.rename(columns={'release_date': 'count'}, inplace=True)
+    data = data.to_dict("records")
+    print(data)
 
     return data
