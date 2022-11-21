@@ -34,15 +34,6 @@ def clean_revenue(df):
     return df
 
 
-def clean_type(df, col):
-    # 分割每个type出新的一行
-    df = df.assign(type=df['type'].str.split('|')).explode('type')
-    df[col] = pd.to_numeric(df[col])
-    data = df.groupby(df['type']).mean().round(2)
-    data = data.reset_index()
-
-    return data
-
 
 def budget_revenue(df):
     sns.lmplot(x="budget", y="revenue", data=df)
