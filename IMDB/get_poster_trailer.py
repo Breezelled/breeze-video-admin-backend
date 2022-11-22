@@ -17,7 +17,11 @@ class Model():
         # 请求头
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)"
-                          " Version/15.4 Safari/605.1.15"
+                          " Version/15.4 Safari/605.1.15",
+            # "Cookie": "csm-hit=tb:G594CM0J6ADT1B3KFBNN+s-G594CM0J6ADT1B3KFBNN|1669120007331&t:1669120007331&adb:adblk_no;session-id=139-6303024-1061703;session-id-time=2082787201l;session-token=54K1VFO/VNe4pdNEX3uZDfwVdkiO6ys7CIvW9yjMUx+ialSQo7//umAgXhXx/GyLUGM1e7m8zXF/f7ahbFqY2MqC38D4szm9cZLYtwxRqo29sASt667kIbF4QWXih7i1vcTiUW5WMaQUuOGU+vxE+R+HC7kuMHqtPNDraE8xUoYoG6Uy2DXRBAChTU+GLmRCbXKqyUfh+HYzCX+hZI4GrQ==;ubid-main=135-1730762-2281967;uu=eyJpZCI6InV1ODhiMzExMTdiODg2NDZiMjhhMDkiLCJwcmVmZXJlbmNlcyI6eyJmaW5kX2luY2x1ZGVfYWR1bHQiOmZhbHNlfX0=",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            # "Host": "www.imdb.com",
+            "Connection": "keep-alive"
         }
         # 存放每一步电影的id和imdb的id
         self.movie_dct = {}
@@ -77,7 +81,7 @@ class Model():
         # 超时重传，最多5次
         while i < 5:
             try:
-                response = requests.get(url, timeout=6)
+                response = requests.get(url, timeout=6, headers=self.headers)
                 if response.status_code == 200:
                     logging.info(f'get {url} sucess')
                     # 正常获取，直接返回

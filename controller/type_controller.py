@@ -1,8 +1,9 @@
 from common.api import api
 import pandas as pd
 from flask import Blueprint
-from handler.budget_revenue_handler import clean_revenue, clean_budget_revenue_exception, clean_budget
+from handler.budget_revenue_handler import clean_revenue, clean_budget
 from handler.type_handler import clean_type_numeric, clean_type
+from handler.release_date_handler import clean_date_to_year
 from common.api import csv_url
 
 pd.set_option("display.max_rows", None)
@@ -52,7 +53,7 @@ def type_date_num():
     df = pd.read_csv(csv_url, usecols=[3, 4])
     df.dropna(inplace=True)
     df = clean_type(df)
-    df['release_date'] = df['release_date'].str.extract(r'(\d\d\d\d)', expand=False)
+    df = clean_date_to_year(df)
     df['cnt'] = 1
     data = df.groupby(['type', 'release_date'])['cnt'].size() \
         .reset_index(name='count')
