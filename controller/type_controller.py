@@ -14,6 +14,9 @@ type_bp = Blueprint('type', __name__, url_prefix='/api/type')
 
 @type_bp.route("/data", methods=["GET"])
 def api_response():
+    """
+    :return: api数据
+    """
     data_dic = {
         "typeBudgetData": type_budget(),
         "typeRevenueData": type_revenue(),
