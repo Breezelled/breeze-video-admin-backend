@@ -1,7 +1,7 @@
 from common.api import api
 import pandas as pd
 from flask import Blueprint
-from common.api import csv_url
+from common.api import info_csv_url
 from handler.rating_handler import clean_rating
 from handler.budget_revenue_handler import clean_revenue
 from handler.company_handler import clean_company
@@ -29,7 +29,7 @@ def api_response():
 
 
 def rating_revenue():
-    df = pd.read_csv(csv_url, usecols=[10, 14])
+    df = pd.read_csv(info_csv_url, usecols=[10, 14])
     df.dropna(inplace=True)
     df = clean_rating(df)
     df = clean_revenue(df)
@@ -41,10 +41,21 @@ def rating_revenue():
 
 
 def rating_company():
-    df = pd.read_csv(csv_url, usecols=[12, 14])
+    df = pd.read_csv(info_csv_url, usecols=[12, 14])
     df.dropna(inplace=True)
     df = clean_rating(df)
-    data = clean_company(df)
+    df = clean_company(df)
+    data = []
+    company_dict = {"20th Century Fox": "20th Century Fox",
+                    "Buena Vista": "Disney",
+                    "Disney": "Disney",
+                    "Warner Bros": "Warner Bros.",
+                    "Sony": "Sony",
+                    "Columbia": "Columbia",
+                    "Paramount": "Paramount"}
+    for v in company_dict.values():
+        data.append({'company': v, 'rating': [df.loc[df['company'] == v, 'rating'].min(),
+                                              df.loc[df['company'] == v, 'rating'].max()]})
     # data = df.sort_values(by='rating', ascending=False).to_dict("records")
 
     # print(data)
@@ -55,7 +66,7 @@ def rating_company():
 
 
 def rating_country_num():
-    df = pd.read_csv(csv_url, usecols=[13, 14])
+    df = pd.read_csv(info_csv_url, usecols=[13, 14])
     df.dropna(inplace=True)
     df = clean_rating(df)
     df = clean_country(df, 50)
@@ -68,7 +79,7 @@ def rating_country_num():
 
 
 def rating_director_num():
-    df = pd.read_csv(csv_url, usecols=[6, 14])
+    df = pd.read_csv(info_csv_url, usecols=[6, 14])
     df.dropna(inplace=True)
     df = clean_rating(df)
     df = clean_director(df, 20)

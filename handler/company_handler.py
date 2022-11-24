@@ -16,10 +16,7 @@ def clean_company(df):
     for k, v in company_dict.items():
         df.loc[df['company'].str.contains(k), 'company'] = v
     df = df[df['company'].isin(company_list)]
-    data = []
-    for v in company_dict.values():
-        data.append({'company': v, 'rating': [df.loc[df['company'] == v, 'rating'].min(),
-                                              df.loc[df['company'] == v, 'rating'].max()]})
+
     # for v in data:
     #     v['rating'].sort()
     # df = df.groupby(['company']).mean().round(2).reset_index()
@@ -30,6 +27,5 @@ def clean_company(df):
 
     # print(dfr)
     # print(data)
-    print(data)
 
-    return data
+    return df
