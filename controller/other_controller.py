@@ -3,7 +3,7 @@ import pandas as pd
 from flask import Blueprint
 from handler.company_handler import clean_company
 from handler.type_handler import clean_type
-from common.api import info_csv_url, freq_words_csv_url
+from common.api import info_csv_url, freq_words_csv_url, review_csv_url
 
 pd.set_option("display.max_rows", None)
 pd.set_option("display.float_format", lambda x: "%.2f" % x)
@@ -21,6 +21,8 @@ def api_response():
         "reviewWordFrequencyData": review_word_frequency(),
         "companyMovieNumData": company_movie_num(),
         "companyTypeProportionData": company_type_proportion(),
+        "starNumData": star_num(),
+        "reviewerNumData": reviewer_num(),
     }
     return api(data_dic)
 
@@ -94,3 +96,27 @@ def company_type_proportion():
 
     return data
 
+
+def star_num():
+    df = pd.read_csv(info_csv_url, usecols=[8])
+    df.dropna(inplace=True)
+    df = df.assign(star=df['star'].str.split('|')).explode('star')
+    df = df.groupby(['star']).size().reset_index(name="count")
+    data = df.sort_values(by='count', ascending=False).head(20)
+    data = data.sort_values(by='count')
+    print(data)
+    data = data.to_dict("records")
+
+    return data
+
+
+def reviewer_num():
+    df = pd.read_csv(review_csv_url, usecols=[1])
+    df.dropna(inplace=True)
+    df = df.groupby(['author']).size().reset_index(name="count")
+    data = df.sort_values(by='count', ascending=False).head(20)
+    data = data.sort_values(by='count')
+    print(data)
+    data = data.to_dict("records")
+
+    return data
