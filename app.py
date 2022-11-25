@@ -5,6 +5,7 @@ from controller.type_controller import type_bp
 from controller.rating_controller import rating_bp
 from controller.other_controller import other_bp
 from controller.revenue_prediction_controller import revenue_prediction_bp
+from controller.display_controller import display_bp
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True, resources=r"/*")
@@ -13,6 +14,7 @@ app.register_blueprint(type_bp)
 app.register_blueprint(rating_bp)
 app.register_blueprint(other_bp)
 app.register_blueprint(revenue_prediction_bp)
+app.register_blueprint(display_bp)
 
 
 if __name__ == "__main__":
