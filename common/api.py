@@ -12,3 +12,21 @@ def api(data_dic):
         "errorMessage": "error message"
     }
     return jsonify(api)
+
+
+def show_data_api(data, page, total):
+    api = {
+        "results": data,
+        "page": page,
+        "total": total,
+    }
+    return jsonify(api)
+
+
+def obj2json(items):
+    data = []
+    for i in items:
+        print(i.__str__())
+        data.append(i.to_json())
+
+    return data
